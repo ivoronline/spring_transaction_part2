@@ -14,31 +14,36 @@ public class PersonService {
 
     public void insertRecords() throws SQLException {
 
-        //FIRST RECORD IS ALWAYS INSERTED
-        personRepository.save(new Person(0, "First Person", 10));
-
         //GET DB CONNECTION
         Connection connection = dataSource.getConnection();
 
+        //FIRST RECORD IS ALWAYS INSERTED
+        Person person1 = new Person(0, "First Person", 10);
+        personRepository.save(connection, person1);
+
         //TRANSACTION
-        try (connection) {           //Call connection.close() at the end of try block
+        try { //It doesn't work with try(connection) => throws java.sql.SQLRecoverableException
 
             //START TRANSACTION
-            connection.setAutoCommit(false);
+            //connection.setAutoCommit(false);
 
             //EXECUTE SQL STATEMENTS
-            for (int age = 1; age <= 5; age++) {
-                if(age==4) { throw new RuntimeException("Exception"); }
-                personRepository.save(new Person(0, "John", age));
+            for (int age = 1; age <= 2; age++) {
+                if(age==2) { throw new Exception("Exception"); }
+                Person person = new Person(age, "John", age);
+                personRepository.save(connection, person);
                 System.out.println("Record inserted");
             }
 
             //COMMIT TRANSACTION
             connection.commit();
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             //ROLLBACK TRANSACTION
             connection.rollback();   //throws java.sql.SQLRecoverableException
+        }
+        finally {
+          connection.close();
         }
 
     }
